@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://use.typekit.net/jxg4qvt.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC&display=swap" rel="stylesheet">
+  <style>
+    #current-time-label {
+      transition: background-color 0.3s ease, invert 0.3s ease;
+      font-size: 32px;
+      position: absolute;
+      background-color: rgba(80,80,80,0);
+      color: rgba(255,255,255,0);
+      padding: 10px;
+      z-index: 1;
+      width: 230px;
+      height: 50px;
+      text-align: center;
+      border-radius: 35px;
+      font-family: "Noto Sans SC", system-ui;
+    }
+
+    #loaded-label{
+      transition: background-color 0.3s ease, invert 0.3s ease;
+      display: none;
+      font-size: 35px;
+      position: absolute;
+      background-color: rgba(255,255,255,0.5);
+      backdrop-filter: blur(5px);
+      color: rgba(0,0,0,0.9);
+      z-index: 2;
+      text-align: center;
+      border-radius: 13.5px;
+      border: 1px solid rgba(0,0,0,0.5);
+      width: 40%;
+      height: 40%;
+      top: 30%;
+      left: 30%;
+      font-family: "Noto Sans SC", system-ui;
+      align-items: center;
+    }
+
+    #dismiss-button {
+      width: 20%;
+      border-radius: 50%;
+    }
+
+    #audio-controls {
+      transition: filter 0.1s ease, background-color 0.3s ease, color 0.1s ease;
+      position: fixed;
+      margin-left: 30px;
+      margin-bottom: 13.5px;
+      bottom: 0;
+      background-color: #f5f5f5;
+      padding: 3px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 13.5px;
+    }
+
+    #audio-controls img {
+      margin: 5px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+    }
+
+    #audio-player {
+      transition: filter 0.3s ease, background-color 0.3s ease, width 0.3s ease 0.1s;
+      display: block;
+      margin: 0 0 auto;
+      height: 54px;
+      outline: none;
+    }
+
+    body {
+      transition: filter 0.3s ease, background-color 0.3s ease;
+    }
+
+    button:focus {
+      outline: none;
+    }
+
+    canvas {
+      transition: filter 0.3s ease, background-color 0.3s ease, border 0.3s ease;
+      margin-left: 10px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+      height: 90%;
+      align: right;
+      border: 2px solid #eeeeee;
+      border-radius: 13.5px;
+      background-color: white;
+    }
+
+    #content {
+      transition: filter 0.3s ease, background-color 0.3s ease;
+      margin-left: 15px;
+      margin-right: 15px;
+      margin-bottom: 5px;
+      display: flex;
+    }
+
+    #content img {
+      border-radius: 10px;
+      margin: 5px;
+      margin-right: 30px;
+      width: 66px;
+      height: 36px;
+    }
+
+    #current-track-name {
+      margin-left: 20px;
+      margin-right: 20px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: "Noto Sans SC", system-ui;
+      font-weight: normal;
+    }
+
+    #head {
+      transition: filter 0.3s ease, background-color 0.3s ease;
+      margin-left: 30px;
+      margin-top: 13.5px;
+      top: 0;
+      background-color: #f5f5f5;
+      padding: 3px;
+      justify-content: center;
+      align-items: center;
+      border-radius: 13.5px;
+      width: calc(100vw - 82px);
+    }
+
+    img{
+      transition: filter 0.3s ease, background-color 0.3s ease;
+      cursor: pointer;
+      outline: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      tap-highlight-color: transparent;
+    }
+
+    img:hover {
+      background-color: rgb(230, 230, 230);
+    }
+
+    #playlist {
+      transition: filter 0.3s ease, background-color 0.3s ease, border 0.3s ease;
+      overflow-y: auto;
+      padding: 0;
+      list-style: none;
+    }
+
+    #playlist li:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent 0%, rgba(128, 128, 128, 0.2) 50%, transparent 100%);
+      margin-top: 5px;
+    }
+
+    #playlist li {
+      position: relative;
+      padding-bottom: 4px;
+      padding-top: 3px;
+      padding-left: 0;
+      padding-right: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    #playlist li .button-container {
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      margin: 1px;
+      margin-left: 5px;
+      margin-right: 0;
+    }
+
+    #playlist li .button-container button {
+      display: block;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    #playlist li .button-container button:hover {
+      background-image: radial-gradient(circle, rgba(235, 235, 235, 0.5) 75%, rgba(235, 235, 235, 0) 100%);
+    }
+
+    .remove-button {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      color: darkgrey;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-right: 5px;
+      font-family: monospace, system-ui;
+      touch-action: manipulation;
+    }
+
+    .file-name-button{
+      width: calc(100% - 30px);
+      flex-grow: 1;
+      text-align: left;
+      padding-bottom: 6px;
+      padding-top: 6px;
+      padding-left: 0;
+      padding-right: 0;
+      font-family: "mozaic-geo-variable", system-ui;
+      font-variation-settings: "wght" 300;
+      touch-action: manipulation;
+    }
+
+    .middle {
+      display: flex;
+      margin-left: 30px;
+      margin-right: 30px;
+    }
+
+    .playlist {
+      flex: 1;
+      margin-right: 10px;
+    }
+
+    .previous-button {
+      transform: rotate(180deg);
+    }
+
+    ul {
+      border: 2px solid #eeeeee;
+      border-radius: 13.5px;
+    }
+
+    ul::-webkit-scrollbar-thumb {
+      background-color: #e0e0e0;
+      border: 4px solid transparent;
+      border-radius: 8px;
+      background-clip: padding-box;
+    }
+
+    ul::-webkit-scrollbar {
+      width: 16px;
+    }
+
+    video {
+      transition: filter 0.3s ease;
+      margin-left: 10px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+      align: right;
+      flex: 1;
+    }
+
+    video::-webkit-media-controls-panel {
+      display: none !important;
+    }
+
+    #secondary-audio-controls {
+      transition: filter 0.3s ease, background-color 0.3s ease;
+      background-color: #f5f5f5;
+      width: 60px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 16px;
+      margin-right: 0;
+      border-radius: 13.5px;
+    }
+
+    #secondary-audio-controls img{
+      margin: 10px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 50px;
+      height: 120px; /* Adjust as needed */
+      overflow: hidden;
+      transform: rotate(-90deg);
+    }
+
+    .slider {
+      transition: filter 0.3s ease;
+      width: 100%;
+      height: 100%;
+    }
+
+    .slider:focus{
+      outline: none;
+    }
+
+    input[type="range"]:hover,
+    input[type="range"]:focus {
+      outline: none;
+    }
+  </style>
+  <script>
+    var playlist = [];
+    var fileList = [];
+    var playHistory = [];
+    var historyIndex = 0;
+    var currentIndex = 0;
+    var playbackMode = 'loop';
+
+    function imageUrl (content, small) {
+      var returnString = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI2LjAuMiwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA";
+      if (small) { return returnString + "xMDUgMTA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMDUgMTA1OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6bm9uZTtzdHJva2U6IzAwMDAwMDtzdHJva2Utd2lkdGg6NTtzdHJva2UtbWl0ZXJsaW1pdDoxMDt9C" + content;}
+      return returnString + "yMTAgMTEwIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyMTAgMTEwOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6bm9uZTtzdHJva2U6IzA" + content;
+    }
+
+    function playAudio(file, index, recordHistory) {
+      var liElements = document.querySelectorAll("#playlist li");
+      if (recordHistory) {
+        playHistory[historyIndex] = index;
+        historyIndex++;
+      }
+      liElements.forEach(function(li) {
+        var fileButton = li.querySelector(".file-name-button");
+        if (fileButton.textContent === file.name && fileButton.style.fontWeight != "bold") {
+          fileButton.style.fontWeight = "bold";
+          fileButton.style.fontVariationSettings = '"wght" 500';
+          fileButton.style.backgroundColor = "rgb(245, 245, 245)";
+        } else if (fileButton.textContent != file.name && fileButton.style.fontWeight === "bold") {
+          fileButton.style.fontWeight = '';
+          fileButton.style.fontVariationSettings = '"wght" 300';
+          fileButton.style.backgroundColor = '';
+        }
+      });
+      audioElement.src = file.url;
+      audioElement.play();
+      document.getElementById('play-pause').src = toPauseIcon;
+      document.getElementById('current-track-name').innerText = file.name;
+      currentIndex = index;
+      localStorage.setItem('continue playing', file.name);
+    }
+
+    function playRandomTrack() {
+      vibration();
+      if (playlist.length > 0) {
+        currentIndex = Math.floor(Math.random() * playlist.length);
+        playAudio(playlist[currentIndex], currentIndex, true);
+      } else {
+        var audioInput = document.getElementById('audio-input');
+        audioInput.click();
+      }
+    }
+
+    function playNext(vibrate) {
+      if (vibrate) { vibration();}
+      if (playbackMode === 'shuffle') { currentIndex = Math.floor(Math.random() * playlist.length); }
+      else { currentIndex = (currentIndex + 1) % playlist.length; }
+      playAudio(playlist[currentIndex], currentIndex, true);
+    }
+
+    function playPrevious(vibrate) {
+      if (vibrate) { vibration();}
+      if (playlist.length === 0) {return;}
+      historyIndex--;
+      if (historyIndex > 0) {
+        while (1) {
+          if (historyIndex <= 0) {
+            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            break;
+          } if (playHistory[historyIndex-1] != -1) {
+            currentIndex = playHistory[historyIndex-1];
+            break;
+          }
+          historyIndex--;
+        }
+      } else { currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;}
+      playAudio(playlist[currentIndex], currentIndex, historyIndex <= 0);
+    }
+
+    function togglePlaybackMode(vibrate) {
+      if (vibrate) { vibration();}
+      var modeButton = document.getElementById('mode-button');
+      var modeButton2 = document.getElementById('second-mode-button');
+      if (playbackMode === 'loop') {
+        playbackMode = 'single-loop';
+        modeButton.src = modeButton2.src = imageUrl('gkuc3Qxe2ZvbnQtZmFtaWx5OidUcmVidWNoZXQtQm9sZEl0YWxpYyc7fQoJLnN0Mntmb250LXNpemU6MjQuNTg0OHB4O30KPC9zdHlsZT4KPGNpcmNsZSBjbGFzcz0ic3QwIiBjeD0iNTIuNSIgY3k9IjUyLjUiIHI9IjUwIi8+CjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0zNy4yMSwzNC45N2MwLjIyLTAuMDEsMC40NC0wLjAxLDAuNjYtMC4wMWgyOC45MmM5LjY5LDAsMTcuNTQsNy44NSwxNy41NCwxNy41NGMwLDIuNDYtMC41LDQuNzktMS40Miw2LjkyIi8+Cjxwb2x5Z29uIGNsYXNzPSJzdDAiIHBvaW50cz0iMzEuMjksMzQuOTYgMzUuNzksMzcuNTYgMzUuNzksMzIuMzYgIi8+CjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik02Ny42Miw2OS41N2MtMC4yMiwwLjAxLTAuNDQsMC4wMS0wLjY2LDAuMDFIMzguMDRjLTkuNjksMC0xNy41NC03Ljg1LTE3LjU0LTE3LjU0YzAtMi40NiwwLjUtNC43OSwxLjQyLTYuOTIiCgkvPgo8cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjczLjU1LDY5LjU4IDY5LjA1LDY2Ljk4IDY5LjA1LDcyLjE4ICIvPgo8dGV4dCB0cmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAxIDQ1LjI5NzYgNjEuMTA3NCkiIGNsYXNzPSJzdDEgc3QyIj4xPC90ZXh0Pgo8L3N2Zz4K', 1);
+        modeButton.alt = modeButton2.alt = modeButton.title = modeButton2.title = 'Single Track Loop'
+      } else if (playbackMode === 'single-loop') {
+        playbackMode = 'shuffle';
+        modeButton.src = modeButton2.src = imageUrl('jwvc3R5bGU+CjxjaXJjbGUgY2xhc3M9InN0MCIgY3g9IjUyLjUiIGN5PSI1Mi41IiByPSI1MCIvPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMjUuMjQsMzYuMTZjMC43NywwLDEuOTQsMC4wMSwzLjM4LDBjMi45NS0wLjAyLDMuNjQtMC4wNyw0Ljc5LDBjMi4yOSwwLjE0LDQuMDQsMC42Miw0LjkyLDAuODgKCWMxLjEsMC4zMiwyLjI2LDAuNjYsMy42NCwxLjQyYzEuNzksMC45OCwyLjkxLDIuMSwzLjg1LDMuMDRjMS42NCwxLjY1LDIuNTcsMy4xNCwzLjU4LDQuNzJjMC43MiwxLjE0LDAuNzUsMS4zMywyLjUsNC41OQoJYzEuNzMsMy4yNCwxLjM2LDIuNDQsMy40NCw2LjI3YzEuNzcsMy4yNywyLjExLDMuOTksMy4xLDUuMjZjMS4yNywxLjYzLDIuNDEsMi42MiwyLjksMy4wNGMwLjkxLDAuNzYsMi4wNCwxLjcxLDMuNzgsMi40MwoJYzEuNDYsMC42MSwyLjY3LDAuNzcsMy45OCwwLjk0YzAuMzMsMC4wNCwxLjIyLDAuMTYsNC4xOCwwLjJjMS4yMSwwLjAyLDIuNTksMC4wMiw0LjEyLDAiLz4KPHBhdGggY2xhc3M9InN0MCIgZD0iTTgxLjUzLDM0LjI3Yy0wLjg1LDAuMDEtMi4xNiwwLjAxLTMuNzYsMGMtMy4yOS0wLjAyLTQuMDYtMC4wOC01LjM0LDBjLTIuNTUsMC4xNi00LjUxLDAuNjktNS40OSwwLjk4CgljLTEuMjIsMC4zNi0yLjUyLDAuNzMtNC4wNiwxLjU4Yy0yLDEuMS0zLjI1LDIuMzQtNC4yOSwzLjM5Yy0xLjgzLDEuODQtMi44NywzLjUtMy45OSw1LjI3Yy0wLjgsMS4yNy0wLjg0LDEuNDktMi43OCw1LjEyCgljLTEuOTMsMy42MS0xLjUyLDIuNzItMy44NCw3Yy0xLjk3LDMuNjUtMi4zNSw0LjQ1LTMuNDYsNS44N2MtMS40MiwxLjgxLTIuNjksMi45Mi0zLjIzLDMuMzljLTEuMDEsMC44NS0yLjI3LDEuOS00LjIxLDIuNzEKCWMtMS42MywwLjY4LTIuOTgsMC44Ni00LjQ0LDEuMDVjLTAuMzYsMC4wNS0xLjM2LDAuMTctNC42NiwwLjIzYy0xLjM1LDAuMDItMi44OSwwLjAzLTQuNTksMCIvPgo8cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjIzLjM4LDM2LjEyIDI3Ljg4LDM4LjcyIDI3Ljg4LDMzLjUyICIvPgo8cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjgxLjUzLDY4Ljk2IDc3LjAzLDY2LjM2IDc3LjAzLDcxLjU2ICIvPgo8L3N2Zz4K', 1);
+        modeButton.alt = modeButton2.alt = modeButton.title = modeButton2.title = 'Shuffle'
+      } else {
+        playbackMode = 'loop';
+        modeButton.src = modeButton2.src = loopIcon;
+        modeButton.alt = modeButton2.alt = modeButton.title = modeButton2.title = 'Loop'
+      }
+      localStorage.setItem('playback mode', playbackMode);
+    }
+
+    function handleTrackEnd() {
+      if (playbackMode === 'shuffle') { playNext(0); }
+      else if (playbackMode === 'loop') { playNext(0); }
+      else if (playbackMode === 'single-loop') { playAudio(playlist[currentIndex], currentIndex, false); }
+      currentTimeLabel.innerText = convertTime(audioElement.duration, audioElement.duration);
+    }
+
+    function addToPlaylist(files, addToDatabase) {
+      var isFirstTrack = playlist.length === 0;
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        if (!isFileInPlaylist(file.name)) {
+          var fileUrl = URL.createObjectURL(file);
+          if (addToDatabase) { fileList.push(file);}
+          playlist.push({ url: fileUrl, name: file.name });
+
+          var listItem = document.createElement('li');
+          var buttonContainer = document.createElement('div');
+          buttonContainer.classList.add('button-container');
+
+          var removeButton = document.createElement('button');
+          removeButton.innerHTML = '&times;';
+          removeButton.classList.add('remove-button');
+          removeButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            vibration();
+            var index = Array.from(playlistElement.children).indexOf(event.target.closest('li'));
+            removeFileFromPlaylist(index, true);
+          });
+
+          var fileNameButton = document.createElement('button');
+          fileNameButton.classList.add('file-name-button');
+          fileNameButton.innerText = file.name;
+          fileNameButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            vibration();
+            var index = Array.from(playlistElement.children).indexOf(event.target.closest('li'));
+            playAudio(playlist[index], index, true);
+          });
+          buttonContainer.appendChild(removeButton);
+          buttonContainer.appendChild(fileNameButton);
+          listItem.appendChild(buttonContainer);
+          playlistElement.appendChild(listItem);
+        }
+      }
+      if (isFirstTrack && playlist.length > 0) {
+        currentIndex = 0;
+        playAudio(playlist[0], 0, addToDatabase);
+      }
+      if (addToDatabase) { updateDatabase();}
+      handlePageResize();
+    }
+
+    function removeFileFromPlaylist(index, playAudioAfterRemoval) {
+      playlist.splice(index, 1);
+      fileList.splice(index, 1);
+      playlistElement.removeChild(playlistElement.childNodes[index]);
+      updateDatabase();
+      if (!playAudioAfterRemoval) {return;}
+      if (index === currentIndex) {
+        if (playlist.length > 0) {
+          if (index === playlist.length){currentIndex--;}
+          playAudio(playlist[currentIndex], currentIndex, true);
+        } else {
+          audioElement.pause();
+          document.getElementById('play-pause').src = toPlayIcon;
+          audioElement.src = videoElement.src = '';
+          handlePageResize();
+          document.getElementById('current-track-name').innerText = 'Add Files to Playlist:';
+        }
+      } else if (index < currentIndex) { currentIndex--; }
+      for(var i=0; i<playHistory.length; i++) {
+        if (playHistory[i] > index) {playHistory[i]--;}
+        else if (playHistory[i] === index && i != playHistory.length-playAudioAfterRemoval) {playHistory[i] = -1;}
+      }
+    }
+
+    function isFileInPlaylist(fileName) { return playlist.some(function(track) { return track.name === fileName; }); }
+  </script>
+</head>
+<body>
+  <div id="head">
+    <h1 id="current-track-name">Add Files to Playlist:</h1>
+
+    <div class="audio-player" id="content">
+      <label for="audio-input">
+        <img id="add-to-playlist-button" onclick="vibration()" alt="Add to Playlist" title="Add to Playlist" src="">
+      </label>
+      <input type="file" id="audio-input" multiple style="display: none" accept="audio/*, video/*">
+      <img id="empty-playlist" onclick="emptyPlaylist()" alt="Empty Playlist" title="Empty Playlist" src="">
+      <img id="dark-mode-selector" onclick="toggleDarkMode(1)" alt="Dark Mode" title="Dark Mode" src="">
+      <img id="video-switch" onclick="videoSwitch(1)" alt="Switch to Spectrum" title="Switch to Spectrum" src="">
+      <img id="switch-second-control" onclick="swapSecondControl(1)" alt="Move to the Left" title="Move to the Left" src="">
+    </div>
+  </div>
+  <div id="current-time-label">Loading...</div>
+  <div id="loaded-label">
+    <label>Imported from Storage</label>
+    <div id="dismiss-button-container">
+      <img onclick="dismissPopup()" id="dismiss-button" alt="Play" title="Play" src="">
+    </div>
+  </div>
+  <div id="middle" class="middle">
+    <ul id="playlist" class="playlist" onclick="addFiles()" ondrop="handleDrop(event)" ondragover="allowDrop(event)" ondragleave="handleDragLeave(event)"></ul>
+    <canvas id="spectrum"></canvas>
+    <video id="video" src="" width="360" autoplay="autoplay"></video>
+    <div id="secondary-audio-controls">
+      <img onclick="togglePlay()" id="play-pause" alt="Play" title="Play" src="">
+      <img onclick="playNext(1)" id="second-next-button" alt="Next" title="Next" src="">
+      <div class="slider-container" id="progress-slide-container">
+        <input type="range" id="progress-slider" class="slider" min="0" max="1000" value="0">
+      </div>
+      <img onclick="playPrevious(1)" id="second-previous-button" class="previous-button" alt="Previous" title="Previous" src="">
+      <div class="slider-container" id="volume-slide-container">
+        <input type="range" id="volume-slider" class="slider" min="0" max="100" value="0">
+      </div>
+      <img onclick="playRandomTrack()" id="second-random-button" alt="Play Random Track" title="Play Random Track" src="">
+      <img onclick="togglePlaybackMode(1)" id="second-mode-button" alt="Loop" title="Loop" src="">
+    </div>
+  </div>
+  <div id="audio-controls">
+    <img id="random-button" onclick="playRandomTrack()" alt="Play Random Track" title="Play Random Track" src="">
+    <img id="previous-button" onclick="playPrevious(1)" class="previous-button" alt="Previous" title="Previous" src="">
+    <audio id="audio-player" controls onended="handleTrackEnd()" autoplay></audio>
+    <img id="next-button" onclick="playNext(1)" alt="Next" title="Next" src="">
+    <img id="mode-button" onclick="togglePlaybackMode(1)" alt="Loop" title="Loop" src="">
+  <script>
+    var currentTimeLabel = document.getElementById("current-time-label");
+    var playlistElement = document.getElementById('playlist');
+    var audioInput = document.getElementById('audio-input');
+    var addToPlaylistButton = document.getElementById('add-to-playlist-button');
+    var audioElement = document.getElementById("audio-player");
+    var videoElement = document.getElementById("video");
+    var videoDisplay = true;
+    var videoIcon = imageUrl('yMDIwMztzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQoJLnN0MXtmaWxsOm5vbmU7c3Ryb2tlOiMwMjAyMDM7c3Ryb2tlLXdpZHRoOjg7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQoJLnN0MntmaWxsOm5vbmU7c3Ryb2tlOiMwMjAyMDM7c3Ryb2tlLXdpZHRoOjY7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTgwLDEwNUgzMEMxNi4xOSwxMDUsNSw5My44MSw1LDgwVjMwQzUsMTYuMTksMTYuMTksNSwzMCw1aDE1MGMxMy44MSwwLDI1LDExLjE5LDI1LDI1djUwCglDMjA1LDkzLjgxLDE5My44MSwxMDUsMTgwLDEwNXoiLz4KPHBvbHlsaW5lIGNsYXNzPSJzdDEiIHBvaW50cz0iNjAsMjUgNjAsODUgMTUwLDg1ICIvPgo8bGluZSBjbGFzcz0ic3QyIiB4MT0iNzgiIHkxPSI4My4xNSIgeDI9Ijc4IiB5Mj0iNDEuMDMiLz4KPGxpbmUgY2xhc3M9InN0MiIgeDE9Ijk2IiB5MT0iODIuNjUiIHgyPSI5NiIgeTI9IjUyLjUzIi8+CjxsaW5lIGNsYXNzPSJzdDIiIHgxPSIxMTQiIHkxPSI4My4xNSIgeDI9IjExNCIgeTI9IjM0LjUzIi8+CjxsaW5lIGNsYXNzPSJzdDIiIHgxPSIxMzIiIHkxPSI4My4xNSIgeDI9IjEzMiIgeTI9IjQ1LjI4Ii8+Cjwvc3ZnPgo=', 0);
+    var loopIcon = imageUrl('jwvc3R5bGU+CjxjaXJjbGUgY2xhc3M9InN0MCIgY3g9IjUyLjUiIGN5PSI1Mi41IiByPSI1MCIvPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMzcuMjEsMzQuOTdjMC4yMi0wLjAxLDAuNDQtMC4wMSwwLjY2LTAuMDFoMjguOTJjOS42OSwwLDE3LjU0LDcuODUsMTcuNTQsMTcuNTRjMCwyLjQ2LTAuNSw0Ljc5LTEuNDIsNi45MiIvPgo8cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjMxLjI5LDM0Ljk2IDM1Ljc5LDM3LjU2IDM1Ljc5LDMyLjM2ICIvPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNjcuNjIsNjkuNTdjLTAuMjIsMC4wMS0wLjQ0LDAuMDEtMC42NiwwLjAxSDM4LjA0Yy05LjY5LDAtMTcuNTQtNy44NS0xNy41NC0xNy41NGMwLTIuNDYsMC41LTQuNzksMS40Mi02LjkyIgoJLz4KPHBvbHlnb24gY2xhc3M9InN0MCIgcG9pbnRzPSI3My41NSw2OS41OCA2OS4wNSw2Ni45OCA2OS4wNSw3Mi4xOCAiLz4KPC9zdmc+Cg==', 1);
+    var toPlayIcon = imageUrl('gkuc3Qxe3N0cm9rZTojMDAwMDAwO3N0cm9rZS13aWR0aDo1O3N0cm9rZS1taXRlcmxpbWl0OjEwO30KPC9zdHlsZT4KPGNpcmNsZSBjbGFzcz0ic3QwIiBjeD0iNTIuNSIgY3k9IjUyLjUiIHI9IjUwIi8+CjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik03Ni41Niw1Mi40MkwzNi44NSwyOS40OWMtMC4wNi0wLjA0LTAuMTQsMC4wMS0wLjE0LDAuMDh2NDUuODZjMCwwLjA3LDAuMDgsMC4xMiwwLjE0LDAuMDhsMzkuNzEtMjIuOTMKCUM3Ni42Myw1Mi41NSw3Ni42Myw1Mi40NSw3Ni41Niw1Mi40MnoiLz4KPC9zdmc+Cg==', 1);
+    var toPauseIcon = imageUrl('gkuc3Qxe2ZpbGw6bm9uZTtzdHJva2U6IzFEMUQxQjtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQo8L3N0eWxlPgo8Y2lyY2xlIGNsYXNzPSJzdDAiIGN4PSI1Mi41IiBjeT0iNTIuNSIgcj0iNTAiLz4KPGxpbmUgY2xhc3M9InN0MSIgeDE9IjM3LjQ1IiB5MT0iNzcuNDYiIHgyPSIzNy40NSIgeTI9IjI3LjQ2Ii8+CjxsaW5lIGNsYXNzPSJzdDEiIHgxPSI2Ny41NSIgeTE9Ijc3LjU0IiB4Mj0iNjcuNTUiIHkyPSIyNy41NCIvPgo8L3N2Zz4K', 1);
+    document.getElementById('video-switch').src = videoIcon;
+    document.getElementById('mode-button').src = document.getElementById('second-mode-button').src = loopIcon;
+    document.getElementById('random-button').src = document.getElementById('second-random-button').src = imageUrl('gkuc3Qxe3N0cm9rZTojMDAwMDAwO3N0cm9rZS13aWR0aDo1O3N0cm9rZS1taXRlcmxpbWl0OjEwO30KPC9zdHlsZT4KPGNpcmNsZSBjbGFzcz0ic3QwIiBjeD0iNTIuNSIgY3k9IjUyLjUiIHI9IjUwIi8+CjxsaW5lIGNsYXNzPSJzdDAiIHgxPSIyNSIgeTE9IjMwIiB4Mj0iODAiIHkyPSIzMCIvPgo8bGluZSBjbGFzcz0ic3QwIiB4MT0iMjUiIHkxPSI0NSIgeDI9IjgwIiB5Mj0iNDUiLz4KPGxpbmUgY2xhc3M9InN0MCIgeDE9IjI1IiB5MT0iNjAiIHgyPSI4MCIgeTI9IjYwIi8+CjxsaW5lIGNsYXNzPSJzdDAiIHgxPSIyNSIgeTE9Ijc1IiB4Mj0iNjMuMzYiIHkyPSI3NSIvPgo8cGF0aCBjbGFzcz0ic3QxIiBkPSJNODIuMDcsNzUuOTdsLTEwLjg4LTYuMjhjLTAuMDctMC4wNC0wLjE1LDAuMDEtMC4xNSwwLjA5djEyLjU2YzAsMC4wOCwwLjA4LDAuMTIsMC4xNSwwLjA5bDEwLjg4LTYuMjgKCUM4Mi4xMyw3Ni4xMSw4Mi4xMyw3Ni4wMSw4Mi4wNyw3NS45N3oiLz4KPC9zdmc+Cg==', 1);
+    document.getElementById('next-button').src = document.getElementById('second-next-button').src = document.getElementById('previous-button').src = document.getElementById('second-previous-button').src = imageUrl('jwvc3R5bGU+CjxjaXJjbGUgY2xhc3M9InN0MCIgY3g9IjUyLjUiIGN5PSI1Mi41IiByPSI1MCIvPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNzYuNTYsNTIuNDJMMzYuODUsMjkuNDljLTAuMDYtMC4wNC0wLjE0LDAuMDEtMC4xNCwwLjA4djQ1Ljg2YzAsMC4wNywwLjA4LDAuMTIsMC4xNCwwLjA4bDM5LjcxLTIyLjkzCglDNzYuNjMsNTIuNTUsNzYuNjMsNTIuNDUsNzYuNTYsNTIuNDJ6Ii8+Cjwvc3ZnPgo=', 1);
+    document.getElementById('add-to-playlist-button').src = imageUrl('wMDAwMDtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTgwLDEwNUgzMEMxNi4xOSwxMDUsNSw5My44MSw1LDgwVjMwQzUsMTYuMTksMTYuMTksNSwzMCw1aDE1MGMxMy44MSwwLDI1LDExLjE5LDI1LDI1djUwCglDMjA1LDkzLjgxLDE5My44MSwxMDUsMTgwLDEwNXoiLz4KPGxpbmUgY2xhc3M9InN0MCIgeDE9IjEwNSIgeTE9Ijg1IiB4Mj0iMTA1IiB5Mj0iMjUiLz4KPGxpbmUgY2xhc3M9InN0MCIgeDE9Ijc1IiB5MT0iNTUiIHgyPSIxMzUiIHkyPSI1NSIvPgo8L3N2Zz4K', 0);
+    document.getElementById('dark-mode-selector').src = imageUrl('wMDAwMDtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQoJLnN0MXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDAwMDA7c3Ryb2tlLXdpZHRoOjg7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTgwLDEwNUgzMEMxNi4yLDEwNSw1LDkzLjgsNSw4MFYzMEM1LDE2LjIsMTYuMiw1LDMwLDVoMTUwYzEzLjgsMCwyNSwxMS4yLDI1LDI1djUwCglDMjA1LDkzLjgsMTkzLjgsMTA1LDE4MCwxMDV6Ii8+CjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xMzUsNjIuMmMtMy42LDEzLjktMTYuOCwyNC0zMi4yLDIyLjdjLTE0LjYtMS4yLTI2LjUtMTMuMS0yNy43LTI3LjdDNzMuOCw0MS44LDgzLjksMjguNiw5Ny44LDI1CgljMC4yLDAsMC4yLDAsMC4xLDAuMWMtNS4xLDUuMS04LjEsMTIuMi03LjYsMjBDOTEsNTguMywxMDEuNyw2OSwxMTQuOCw2OS43YzcuOCwwLjQsMTUtMi42LDIwLTcuNkMxMzQuOSw2MiwxMzUsNjIuMSwxMzUsNjIuMnoiLz4KPC9zdmc+Cg==', 0);
+    document.getElementById('empty-playlist').src = imageUrl('wMDAwMDtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQoJLnN0MXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDAwMDA7c3Ryb2tlLXdpZHRoOjc7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTgwLDEwNUgzMEMxNi4yLDEwNSw1LDkzLjgsNSw4MFYzMEM1LDE2LjIsMTYuMiw1LDMwLDVoMTUwYzEzLjgsMCwyNSwxMS4yLDI1LDI1djUwCglDMjA1LDkzLjgsMTkzLjgsMTA1LDE4MCwxMDV6Ii8+CjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xMjguOCw4Ny44SDgxLjJjLTAuMSwwLTAuMSwwLTAuMS0wLjFWMjguM2MwLTAuMSwwLTAuMSwwLjEtMC4xaDQ3LjVjMC4xLDAsMC4xLDAsMC4xLDAuMXY1OS41CglDMTI4LjksODcuOCwxMjguOCw4Ny44LDEyOC44LDg3Ljh6Ii8+CjxsaW5lIGNsYXNzPSJzdDEiIHgxPSIxNDAuOCIgeTE9IjI4LjIiIHgyPSI2OS4yIiB5Mj0iMjguMiIvPgo8bGluZSBjbGFzcz0ic3QxIiB4MT0iMTIyLjkiIHkxPSIyMi4yIiB4Mj0iODcuMSIgeTI9IjIyLjIiLz4KPGxpbmUgY2xhc3M9InN0MSIgeDE9IjExMyIgeTE9IjQyLjkiIHgyPSIxMTMiIHkyPSI3My4xIi8+CjxsaW5lIGNsYXNzPSJzdDEiIHgxPSI5NyIgeTE9IjQyLjkiIHgyPSI5NyIgeTI9IjczLjEiLz4KPC9zdmc+Cg==', 0)
+    document.getElementById('switch-second-control').src = imageUrl('wMDAwMDtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQoJLnN0MXtmaWxsOm5vbmU7c3Ryb2tlOiMwMDAwMDA7c3Ryb2tlLXdpZHRoOjg7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTgwLDEwNUgzMEMxNi4yLDEwNSw1LDkzLjgsNSw4MFYzMEM1LDE2LjIsMTYuMiw1LDMwLDVoMTUwYzEzLjgsMCwyNSwxMS4yLDI1LDI1djUwCglDMjA1LDkzLjgsMTkzLjgsMTA1LDE4MCwxMDV6Ii8+CjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xMjUuMywyOS44bDExLjEsMTZWNDZoLTY3Ii8+CjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik04NC43LDgwLjJMNzMuNyw2NHYtMC4xaDY3Ii8+Cjwvc3ZnPgo=', 0);
+    document.getElementById('play-pause').src = document.getElementById('dismiss-button').src = toPlayIcon;
+    var progressIsSeeking = false;
+    var mobile = navigator.userAgentData['mobile'];
+    if (mobile) {
+      var controlImages = document.querySelectorAll("#audio-controls img");
+      for (var j = 0; j < controlImages.length; j++) {
+        controlImages[j].style.width = controlImages[j].style.height = "25px";
+      }
+      audioElement.style.height = "45px";
+    }
+
+    function vibration() { navigator.vibrate(10);}
+
+    function dismissPopup() {
+      vibration();
+      document.getElementById('loaded-label').style.display='none';
+      audioElement.play();
+      document.getElementById('video').play();
+      document.getElementById('play-pause').src = toPauseIcon;
+    }
+
+    function videoSwitch(vibrate) {
+      if (vibrate) { vibration();}
+      videoDisplay = !videoDisplay;
+      localStorage.setItem("video mode", (videoDisplay)? "video":"spectrum");
+      handlePageResize();
+    }
+
+    function swapSecondControl(vibrate) {
+      if (vibrate) { vibration();}
+      var container = document.getElementById("middle");
+      var secondControl = document.getElementById("secondary-audio-controls");
+      var moveButton = document.getElementById("switch-second-control");
+      if (secondControl.style.marginRight === '16px') {
+        currentTimeLabel.style.left = document.documentElement.clientWidth-360 + "px";
+        currentTimeLabel.style.right = '';
+        secondControl.style.marginRight = '0px';
+        secondControl.style.marginLeft = '16px';
+        container.insertBefore(playlistElement, secondControl);
+        moveButton.alt = moveButton.title = "Move to Left";
+        localStorage.setItem('swapped', false);
+      } else {
+        currentTimeLabel.style.right = document.documentElement.clientWidth-360 + "px";
+        currentTimeLabel.style.left = '';
+        secondControl.style.marginRight = '16px';
+        secondControl.style.marginLeft = '0px';
+        container.insertBefore(secondControl, playlistElement);
+        moveButton.alt = moveButton.title = "Move to Right";
+        localStorage.setItem('swapped', true);
+      }
+    }
+
+    function togglePlay() {
+      vibration();
+      if (document.getElementById('play-pause').src === toPlayIcon && playlist.length > 0) {
+        audioElement.play();
+        document.getElementById('video').play();
+        document.getElementById('play-pause').src = toPauseIcon;
+      } else {
+        audioElement.pause();
+        document.getElementById('video').pause();
+        document.getElementById('play-pause').src = toPlayIcon;
+      }
+    }
+
+    var progressSlider = document.getElementById("progress-slider");
+    var volumeSlider = document.getElementById("volume-slider");
+    var updateTimeout;
+    var isDragging = false;
+    var processIsDragging = false;
+
+    function convertTime(time1, time2) {
+      if (time1 < 0) { time1 = 0;}
+      else if (time1 > time2) { time1 = time2;}
+      var hour1=Math.floor(time1/60/60);
+      var minute1=(Math.floor(time1/60)%60).toString().padStart(2, '0');
+      var second1=(Math.floor(time1)%60).toString().padStart(2, '0');
+      var hour2=Math.floor(time2/60/60);
+      var minute2=(Math.floor(time2/60)%60).toString().padStart(2, '0');
+      var second2=(Math.floor(time2)%60).toString().padStart(2, '0');
+      if (isNaN(hour1)) {
+        if (playlist.length === 0) { return 'No Media';}
+        return 'Loading...';
+      }
+      if (hour2 != 0) { return `${hour1}:${minute1}:${second1} / ${hour2}:${minute2}:${second2}`;}
+      if (minute2 != "00") { return `${minute1}:${second1} / ${minute2}:${second2}`;}
+      if (second2 != "00") { return `${second1} / ${second2} s`;}
+      return `${time1} / ${time2} s`;
+    }
+
+    function handleTouchEvents(slider) {
+      slider.addEventListener("touchstart", function() {
+        event.preventDefault();
+        isDragging = true;
+        currentTimeLabel.style.backgroundColor = 'rgba(80,80,80,0.3)';
+        currentTimeLabel.style.color = 'rgba(255,255,255,1)';
+        const lower = slider.getBoundingClientRect().top;
+        const upper = lower + slider.offsetWidth;
+        currentTimeLabel.style.top = Math.min(upper, Math.max(lower, event.touches[0].clientY))-30 + "px";
+        if (slider === progressSlider) {
+          clearTimeout(updateTimeout);
+          processIsDragging = true;
+          audioElement.currentTime = (slider.value / 1000) * audioElement.duration;
+          currentTimeLabel.innerText = convertTime((slider.value / 1000) * audioElement.duration, audioElement.duration);
+        } else {
+          audioElement.volume = slider.value / 100;
+          currentTimeLabel.innerText = slider.value;
+        }
+      });
+
+      slider.addEventListener("touchmove", function(event) {
+        event.preventDefault();
+        const lower = slider.getBoundingClientRect().top;
+        const upper = lower + slider.offsetWidth;
+        currentTimeLabel.style.top = Math.min(upper, Math.max(lower, event.touches[0].clientY))-30 + "px";
+        if (isDragging) {
+          var touchY = event.touches[0].clientY;
+          var rect = slider.getBoundingClientRect();
+          var sliderHeight = rect.height;
+          var sliderTop = rect.top;
+          if (slider === progressSlider) {
+            var newValue = 1000 - ((touchY - sliderTop) / sliderHeight) * 1000;
+            var oldValue = slider.value;
+            slider.value = Math.max(0, Math.min(1000, newValue));
+            if (Math.floor(oldValue/40) != Math.floor(slider.value/40)) { vibration();}
+            processIsDragging = true;
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(function() { audioElement.currentTime = (slider.value / 1000) * audioElement.duration;}, 10);
+            currentTimeLabel.innerText = convertTime(audioElement.duration/1000*newValue, audioElement.duration);
+          } else {
+            var newValue = 100 - ((touchY - sliderTop) / sliderHeight) * 100;
+            var oldValue = slider.value;
+            slider.value = Math.max(0, Math.min(100, newValue));
+            if (Math.floor(oldValue/20) != Math.floor(slider.value/20)) { vibration();}
+            audioElement.volume = slider.value / 100;
+            currentTimeLabel.innerText = slider.value;
+          }
+        }
+      });
+
+      slider.addEventListener("touchend", function() {
+        currentTimeLabel.style.backgroundColor = 'rgba(80,80,80,0)';
+        currentTimeLabel.style.color = 'rgba(255,255,255,0)';
+        isDragging = false;
+        processIsDragging = false;
+      });
+    }
+
+    function updateAudio(slider) {
+      if (slider === progressSlider) { audioElement.currentTime = (slider.value / 1000) * audioElement.duration;}
+      else { audioElement.volume = slider.value / 100;}
+    }
+
+    handleTouchEvents(progressSlider);
+    handleTouchEvents(volumeSlider);
+
+    audioElement.addEventListener('volumechange', function() {
+      if (this.muted) return localStorage.setItem("volume", 0);
+      localStorage.setItem("volume", this.volume.toFixed(3));
+    });
+
+    function emptyPlaylist() {
+      vibration();
+      playHistory = [];
+      historyIndex = 0;
+      while (playlist.length > 0) {removeFileFromPlaylist(0, false);}
+      audioElement.src = document.getElementById('video').src = '';
+      document.getElementById('play-pause').src = toPlayIcon;
+      handlePageResize();
+      document.getElementById('current-track-name').innerText = 'Add Files to Playlist:';
+    }
+
+    function handleDragLeave(event) { playlistElement.style.backgroundColor = '';}
+    function allowDrop(event) {
+      if (playlistElement.style.backgroundColor != 'rgb(245, 245, 245)') { playlistElement.style.backgroundColor = 'rgb(245, 245, 245)'; }
+      event.preventDefault();
+    }
+    function handleDrop(event) {
+      event.preventDefault();
+      playlistElement.style.backgroundColor = '';
+      addToPlaylist(event.dataTransfer.files, true);
+    }
+
+    function addFiles() {
+      vibration();
+      var clickedElement = event.target;
+      var remainingSpace = playlistElement.offsetHeight - playlistElement.scrollHeight;
+      if (remainingSpace > 0 && clickedElement === playlistElement) {
+        var audioInput = document.getElementById('audio-input');
+        audioInput.click();
+      }
+    }
+
+    audioInput.addEventListener('change', function(event) {
+      var files = event.target.files;
+      addToPlaylist(files, true);
+      event.target.value = '';
+    });
+
+    addToPlaylistButton.addEventListener('click', function(event) { audioInput.value = '';});
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('video-switch').style.display = 'none';
+      if (localStorage.getItem("swapped") === "true") { swapSecondControl(0);}
+      else { currentTimeLabel.style.left = document.documentElement.clientWidth-360 + "px";}
+      if (localStorage.getItem("video mode") === "spectrum") { videoSwitch(0);}
+      if (localStorage.getItem("volume") != null) {
+        audioElement.volume = localStorage.getItem("volume");
+        document.getElementById('volume-slider').value = localStorage.getItem("volume")*100;
+      } else {document.getElementById('volume-slider').value = 100;}
+      var tempLocalStorage = localStorage.getItem("playback mode");
+      while (tempLocalStorage != playbackMode && tempLocalStorage != null) {togglePlaybackMode(0);}
+      function makeVideoFullscreen() {
+        vibration();
+        if (document.fullscreenElement === video) {
+          if (document.exitFullscreen) { document.exitFullscreen();}
+          else if (document.mozCancelFullScreen) { document.mozCancelFullScreen();}
+          else if (document.webkitExitFullscreen) { document.webkitExitFullscreen();}
+          else if (document.msExitFullscreen) { document.msExitFullscreen();}
+        } else {
+          if (videoElement.requestFullscreen) { videoElement.requestFullscreen();}
+          else if (videoElement.mozRequestFullScreen) { videoElement.mozRequestFullScreen();}
+          else if (videoElement.webkitRequestFullscreen) { videoElement.webkitRequestFullscreen();}
+          else if (videoElement.msRequestFullscreen) { videoElement.msRequestFullscreen();}
+        }
+      }
+      videoElement.addEventListener('click', makeVideoFullscreen);
+      const originalWidth = audioElement.offsetWidth;
+      const scaledWidth = originalWidth * 1.5;
+      audioElement.addEventListener('mouseenter', function() { audioElement.style.width = `${scaledWidth}px`;});
+      audioElement.addEventListener('mouseleave', function() { audioElement.style.width = `${originalWidth}px`;});
+      initialiseDatabase();
+      loadFilesFromDatabase();
+      handlePageResize();
+      if (localStorage.getItem("dark mode") === "true") { toggleDarkMode(0);}
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', function() {
+          vibration();
+          audioElement.play();
+        });
+        navigator.mediaSession.setActionHandler('pause', function() {
+          vibration(); 
+          audioElement.pause();
+        });
+        navigator.mediaSession.setActionHandler('seekbackward', function() {
+          vibration();
+          audioElement.currentTime -= 5;
+        });
+        navigator.mediaSession.setActionHandler('seekforward', function() {
+          vibration();
+          audioElement.currentTime += 5;
+        });
+        if (mobile) {
+          navigator.mediaSession.setActionHandler('seekto', function(event) {
+            vibration();
+            audioElement.currentTime = event.seekTime;
+          });
+        } else {
+          navigator.mediaSession.setActionHandler('seekto', (event) => {
+            vibration();
+            if (event.fastSeek && 'fastSeek' in audioElement) { audio.fastSeek(event.seekTime);}
+            else { audioElement.currentTime = event.seekTime;}
+          });
+        }
+        navigator.mediaSession.setActionHandler('previoustrack', function() { playPrevious(1);});
+        navigator.mediaSession.setActionHandler('nexttrack', function() { playNext(1);});
+        navigator.mediaSession.setActionHandler('seekbackward', function() {
+          audioElement.currentTime -= 5;
+        });
+        navigator.mediaSession.setActionHandler('seekforward', function() {
+          audioElement.currentTime += 5;
+        });
+      }
+    });
+    function handlePageResize() {
+      var canvas = document.getElementById('spectrum');
+      var videoSwitchButton = document.getElementById('video-switch');
+      var pageWidth = document.documentElement.clientWidth;
+      var pageHeight = document.documentElement.clientHeight;
+      var ratio = pageWidth / pageHeight;
+      var videoWidth = videoElement.videoWidth;
+      var videoHeight = videoElement.videoHeight;
+      var videoRatio = videoWidth/videoHeight;
+      var isDragging = false;
+      var secondControl = document.getElementById('secondary-audio-controls');
+      var loadedLabel = document.getElementById('loaded-label');
+      progressSlideContainer = document.getElementById('progress-slide-container');
+      volumeSlideContainer = document.getElementById('volume-slide-container');
+      progressSlideContainer.style.width = `${(pageHeight-610)*.85}px`;
+      volumeSlideContainer.style.width = `${(pageHeight-610)*.1}px`;
+      progressSlideContainer.style.marginTop = progressSlideContainer.style.marginBottom = `${(pageHeight-610)*.425-50}px`;
+      volumeSlideContainer.style.marginTop = volumeSlideContainer.style.marginBottom = `${(pageHeight-610)*.05-50}px`;
+      if (mobile) {
+        if (ratio >= 1) {
+          var tempHeight = pageHeight-215;
+          if (loadedLabel.style.display != "none") { loadedLabel.style.height = loadedLabel.style.width = loadedLabel.style.top = loadedLabel.style.left = '';}
+        } else {
+          var tempHeight = pageHeight-230;
+          if (loadedLabel.style.display != "none") {
+            loadedLabel.style.height = '20%';
+            loadedLabel.style.width = '60%';
+            loadedLabel.style.top = '40%';
+            loadedLabel.style.left = '20%';
+          }
+        }
+      } else { var tempHeight = pageHeight-240;}
+      var tempWidth = (pageWidth-96)*.5; // margin
+
+      if (tempHeight * videoRatio < tempWidth){
+        videoElement.style.height = `${tempHeight}px`;
+        videoElement.style.width = `${tempHeight*videoRatio}px`;
+        var margin = (tempWidth - tempHeight*videoRatio)/2;
+        videoElement.style.marginLeft = '13.75px';
+      } else{
+        videoElement.style.height = `${tempHeight}px`;
+        videoElement.style.width = `${tempWidth}px`;
+        videoElement.style.marginLeft = '10px';
+      }
+
+      if (document.fullscreenElement === canvas) {
+        canvas.style.height = `${pageHeight-4}px`;
+        canvas.style.width = `${pageWidth-4}px`;
+        canvas.height = pageHeight-4;
+        canvas.width = pageWidth-4;
+      } else {
+        canvas.style.height = `${tempHeight-4}px`;
+        canvas.style.width = `${tempWidth-4}px`; // margin
+        canvas.height = tempHeight;
+        canvas.width = tempWidth;
+      }
+      var currentTrackName = document.getElementById('current-track-name');
+      var contentImages = document.querySelectorAll("#content img");
+      var listTrackName = document.querySelectorAll(".file-name-button");
+      var listRemove = document.querySelectorAll(".remove-button");
+      var audioControl = document.getElementById('audio-controls');
+      playlistElement.style.height = `${tempHeight-4}px`;
+      if (ratio < 1 && !document.fullscreenElement) {
+        canvas.style.display = videoElement.style.display = videoSwitchButton.style.display = 'none'; // Hide the canvas and video
+        canvas.width = canvas.height = videoElement.width = videoElement.height = 0;
+        playlistElement.style.marginRight = '0';
+        if (mobile) {
+          currentTimeLabel.style.display = 'block';
+          document.getElementById('switch-second-control').style.display = 'block';
+          secondControl.style.display = 'flex';
+          currentTrackName.style.fontSize = "55px";
+          for (var i = 0; i < contentImages.length; i++) {
+            contentImages[i].style.width = "99px";
+            contentImages[i].style.height = "54px";
+            contentImages[i].style.borderRadius = "13.5px";
+            contentImages[i].style.marginRight = "";
+          }
+          for (var i = 0; i < listTrackName.length; i++) {
+            listTrackName[i].style.fontSize = "30px";
+            listTrackName[i].style.margin = "10px";
+            listRemove[i].style.width = listRemove[i].style.height = "35px";
+            listRemove[i].style.fontSize = "25px";
+            listRemove[i].style.margin = "10px";
+          }
+          audioControl.style.display = "none";
+        } else { currentTimeLabel.style.display = secondControl.style.display = document.getElementById('switch-second-control').style.display = 'none'; }
+      } else {
+        currentTimeLabel.style.display = secondControl.style.display = document.getElementById('switch-second-control').style.display = 'none';
+        playlistElement.style.marginRight = '10px';
+        if (mobile) {
+          currentTrackName.style.fontSize = "25px";
+          for (var i = 0; i < contentImages.length; i++) {
+            contentImages[i].style.width = "55px";
+            contentImages[i].style.height = "30px";
+            contentImages[i].style.borderRadius = "7.5px";
+            contentImages[i].style.marginRight = "15px";
+          }
+          for (var i = 0; i < listTrackName.length; i++) {
+            listTrackName[i].style.fontSize = "";
+            listTrackName[i].style.margin = "";
+            listRemove[i].style.width = listRemove[i].style.height = "25px";
+            listRemove[i].style.fontSize = "";
+            listRemove[i].style.margin = "";
+          }
+          audioControl.style.display = "";
+        }
+        if (videoWidth * videoHeight === 0){
+          videoElement.style.display = 'none';
+          canvas.style.display = 'block';
+          videoSwitchButton.style.display = 'none';
+          videoElement.src = '';
+        }
+        else{
+          videoSwitchButton.style.display = 'block';
+          if (!videoDisplay) {
+            videoElement.style.display = 'none';
+            canvas.style.display = 'block';
+            var url = imageUrl('yMDIwMztzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQoJLnN0MXtmaWxsOiMwMzAzMDQ7fQoJLnN0MntmaWxsOm5vbmU7c3Ryb2tlOiMwMjAyMDM7c3Ryb2tlLXdpZHRoOjU7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMTgwLDEwNUgzMEMxNi4xOSwxMDUsNSw5My44MSw1LDgwVjMwQzUsMTYuMTksMTYuMTksNSwzMCw1aDE1MGMxMy44MSwwLDI1LDExLjE5LDI1LDI1djUwCglDMjA1LDkzLjgxLDE5My44MSwxMDUsMTgwLDEwNXoiLz4KPHBhdGggY2xhc3M9InN0MSIgZD0iTTEzNi44OCwyNWgtMTAuNTFsNi45NCwxNC4yNWgtMTIuMTlMMTE0LjIsMjVoLTguMzVsNi45MywxNC4yNWgtMTIuMTlMOTMuNjYsMjVoLTguMzRsNi45MywxNC4yNUg4MC4wNwoJTDczLjEzLDI1Yy0yLjkxLTAuMDktNS43MiwyLjcxLTUuNjMsNS42MnY0OC43NmMwLDEuNDksMC41NiwyLjgxLDEuNjksMy45NGMxLjEzLDEuMTIsMi40MywxLjY4LDMuOTQsMS42OGg2My43NQoJYzIuOTEsMC4wOSw1LjcxLTIuNzEsNS42Mi01LjYyVjMwLjYyQzE0Mi41OSwyNy43MSwxMzkuNzksMjQuOSwxMzYuODgsMjV6IE0xMzYuODgsNzkuMzhINzMuMTNWNDQuODdoNjMuNzVWNzkuMzh6Ii8+Cjxwb2x5Z29uIGNsYXNzPSJzdDEiIHBvaW50cz0iMTE0LjI1LDYyLjIgOTkuMjUsNTMuNTQgOTkuMjUsNzAuODYgIi8+CjxyZWN0IHg9IjczLjEzIiB5PSI0NC44NyIgY2xhc3M9InN0MiIgd2lkdGg9IjYzLjc1IiBoZWlnaHQ9IjM0LjUxIi8+Cjwvc3ZnPgo=', 0);
+            if (videoSwitchButton.src != url) {videoSwitchButton.src = url;}
+            videoSwitchButton.alt = videoSwitchButton.title = "Switch to Video";
+            videoElement.width = videoElement.height = 0;
+          } else{
+            videoElement.style.display = 'block';
+            canvas.style.display = 'none';
+            if (videoSwitchButton.src != videoIcon) {videoSwitchButton.src = videoIcon;}
+            videoSwitchButton.alt = videoSwitchButton.title = "Switch to Spectrum";
+            canvas.width = canvas.height = 0;
+          }
+        }
+      }
+
+      var control = document.getElementById('audio-controls');
+      if (pageWidth-82 < 160) {
+        control.style.marginLeft = `${-50 + (pageWidth-82)/2}px`;
+        control.style.width = '160px';
+      } else {
+        control.style.marginLeft = '30px';
+        control.style.width = `${pageWidth-82}px`;
+      }
+      var head = document.getElementById('head');
+      if (pageWidth-82 < 215) {
+        head.style.marginLeft = `${-77.5 + (pageWidth-82)/2}px`;
+        head.style.width = '215px';
+      } else {
+        head.style.marginLeft = '30px';
+        head.style.width = `${pageWidth-82}px`;
+      }
+    }
+
+    window.addEventListener('resize', handlePageResize);
+
+    const dbName = 'myDatabase';
+    const objectStoreName = 'files';
+
+    function initialiseDatabase() {
+      const request = window.indexedDB.open(dbName, 1);
+      request.onupgradeneeded = function(event) {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(objectStoreName)) {
+          const objectStore = db.createObjectStore(objectStoreName, { keyPath: 'name' });
+          objectStore.createIndex('name', 'name', { unique: true });
+        }
+      };
+    }
+
+    function updateDatabase() {
+      const request = window.indexedDB.open(dbName, 1);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(objectStoreName, 'readwrite');
+        const objectStore = transaction.objectStore(objectStoreName);
+        const existingFilesRequest = objectStore.getAll();
+        existingFilesRequest.onsuccess = function(event) {
+          const existingFiles = event.target.result;
+          for (const existingFile of existingFiles) { if (!fileList.some(file => file.name === existingFile.name)) { objectStore.delete(existingFile.name); }}
+          for (const file of fileList) { if (!existingFiles.some(existingFile => existingFile.name === file.name)) { objectStore.put(file); }}
+        };
+      };
+    }
+
+    function loadFilesFromDatabase() {
+      handlePageResize();
+      tempLocalStorage = localStorage.getItem("continue playing");
+      document.getElementById('current-track-name').innerText = "Loading Playlist...";
+      const request = window.indexedDB.open(dbName, 1);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(objectStoreName, 'readonly');
+        const objectStore = transaction.objectStore(objectStoreName);
+        const cursorRequest = objectStore.openCursor();
+        cursorRequest.onsuccess = function(event) {
+          const cursor = event.target.result;
+          if (cursor) {
+            const file = cursor.value;
+            fileList.push(file);
+            cursor.continue();
+          } else {
+            document.getElementById('current-track-name').innerText = "Add Files to Playlist:";
+            addToPlaylist(fileList, false);
+            for(var fileIndex = 0; fileIndex < fileList.length; fileIndex++) {
+              if (fileList[fileIndex].name === tempLocalStorage) {
+                playAudio(playlist[fileIndex], fileIndex, true);
+                videoElement.src = audioElement.src;
+                if (videoElement.videoWidth * videoElement.videoHeight != 0) {
+                  videoElement.play();
+                  handlePageResize();
+                }
+                break;
+              }
+            }
+          }
+          if (fileList.length != 0 && document.getElementById('loaded-label').style.display != "grid") { document.getElementById('loaded-label').style.display = "grid";}
+        };
+      };
+    }
+    // skip unplayable media
+    audioElement.addEventListener('error', (event) => { playNext(0);/*for(var i=0; i<playlist.length; i++) { if (playlist[i].url === audioElement.src) { return removeFileFromPlaylist(i, true);}}*/});
+
+    document.getElementById('video').addEventListener("loadedmetadata", handlePageResize);
+
+    audioElement.addEventListener('ratechange', function(event) { videoElement.playbackRate = audioElement.playbackRate;});
+
+    function toggleDarkMode(vibrate) {
+      if (vibrate) { vibration();}
+      var canvas = document.getElementById('spectrum');
+      var control = document.getElementById('audio-controls');
+      var secondControl = document.getElementById('secondary-audio-controls');
+      var title = document.getElementById('head');
+      var random = document.getElementById('random-button');
+      var previous = document.getElementById('previous-button');
+      var next = document.getElementById('next-button');
+      var mode = document.getElementById('mode-button');
+      var random2 = document.getElementById('second-random-button');
+      var previous2 = document.getElementById('second-previous-button');
+      var next2 = document.getElementById('second-next-button');
+      var mode2 = document.getElementById('second-mode-button');
+      var playButton = document.getElementById('play-pause');
+      var add = document.getElementById('content');
+      var head = document.getElementById('current-track-name');
+      var loadedLabel = document.getElementById('loaded-label');
+      var dismissButton = document.getElementById('dismiss-button');
+      if (document.body.style.backgroundColor != "rgb(29, 29, 29)") { // light mode
+        videoElement.style.filter = 'brightness(0.8)';
+        document.body.style.backgroundColor = canvas.style.backgroundColor = "#1d1d1d";
+        canvas.style.border = "2px solid #323232";
+        playlistElement.style.border = "2px solid #fffff";
+        title.style.backgroundColor = secondControl.style.backgroundColor = control.style.backgroundColor = "#131313";
+        loadedLabel.style.backgroundColor = 'rgba(50,50,50,0.8)';
+        loadedLabel.style.color = 'rgba(255,255,255,0.8)';
+        currentTimeLabel.style.filter = audioElement.style.filter = "invert(0.97)";
+        dismissButton.style.filter = progressSlider.style.filter = volumeSlider.style.filter = playButton.style.filter = playlistElement.style.filter = random.style.filter = previous.style.filter = next.style.filter = mode.style.filter = random2.style.filter = previous2.style.filter = next2.style.filter = mode2.style.filter = add.style.filter = head.style.filter = "invert(0.85)";
+      } else {
+        videoElement.style.filter = 'brightness(1)';
+        document.body.style.backgroundColor = canvas.style.backgroundColor = "#ffffff";
+        canvas.style.border = playlistElement.style.border = "2px solid #eeeeee";
+        title.style.backgroundColor = secondControl.style.backgroundColor = control.style.backgroundColor = "#f5f5f5";
+        loadedLabel.style.backgroundColor = '';
+        loadedLabel.style.color = '';
+        dismissButton.style.filter = currentTimeLabel.style.filter = progressSlider.style.filter = volumeSlider.style.filter = playButton.style.filter = audioElement.style.filter = playlistElement.style.filter = random.style.filter = previous.style.filter = next.style.filter = mode.style.filter = random2.style.filter = previous2.style.filter = next2.style.filter = mode2.style.filter = add.style.filter = head.style.filter = "invert(0)";
+      }
+      localStorage.setItem('dark mode', document.body.style.backgroundColor === "rgb(29, 29, 29)");
+    }
+
+    audioElement.addEventListener('timeupdate', function(event) {
+      if (!processIsDragging) {
+        if (!isNaN(audioElement.duration)) { progressSlider.value = (audioElement.currentTime / audioElement.duration) * 1000; }
+        else { progressSlider.value = 0; }
+      }
+      else {
+        clearTimeout(updateTimeout);
+        updateTimeout = setTimeout(function() { audioElement.currentTime = (progressSlider.value / 1000) * audioElement.duration;}, 50);
+        return;
+      }
+      if (videoElement.style.display === "none") {return;}
+      if (isDragging || Math.abs(audioElement.currentTime - videoElement.currentTime) > 0.1){ videoElement.currentTime = audioElement.currentTime;}
+    });
+
+    audioElement.addEventListener("seeking", function() {isDragging = true;});
+    audioElement.addEventListener("seeked", function() {isDragging = true;});
+
+    audioElement.addEventListener('pause', function(event) {
+      document.getElementById('play-pause').src = toPlayIcon;
+      videoElement.pause();
+      isDragging = false;
+    });
+
+    audioElement.addEventListener('play', function(event) {
+      document.getElementById('loaded-label').style.display = "none";
+      if ('mediaSession' in navigator) {
+        if ('mediaMetadata' in audioElement) {
+          var mediaMetadata = new MediaMetadata({
+            title: document.getElementById('current-track-name').innerText,
+            artist: audioElement.mediaMetadata.artist,
+            album: audioElement.mediaMetadata.album
+          });
+        } else {
+          var mediaMetadata = new MediaMetadata({
+            title: document.getElementById('current-track-name').innerText,
+            artist: 'Unknown Artist',
+            album: 'Unknown Album'
+          });
+        }
+        navigator.mediaSession.metadata = mediaMetadata;
+      }
+      try {
+        var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        var analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        var bufferLength = analyser.frequencyBinCount;
+        var dataArray = new Uint8Array(bufferLength);
+        isDragging = false;
+        if (videoElement.src != audioElement.src){videoElement.src = audioElement.src;}
+        else {
+          videoElement.play();
+          document.getElementById('play-pause').src = toPauseIcon;
+        }
+        videoElement.currentTime = audioElement.currentTime;
+        videoElement.volume = 0;
+        var source = audioContext.createMediaElementSource(audioElement);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        function displaySpectrum() {
+          canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+          analyser.getByteFrequencyData(dataArray);
+          var barWidth = canvas.width / bufferLength;
+          for (var i = 0; i < bufferLength; i++) {
+            var barHeight = (dataArray[i] / 255) * canvas.height;
+            var x = i * barWidth;
+            var y = canvas.height - barHeight;
+            if (document.body.style.backgroundColor != "rgb(29, 29, 29)") {canvasContext.fillStyle = 'rgb(' + 150*Math.pow(barHeight/canvas.height, 0.7) + ', ' + non_linear_2(non_linear_1(1 - barHeight/canvas.height*0.95)/255) + ', ' + (non_linear_1(1 - i/bufferLength)) + ')';}
+            else {canvasContext.fillStyle = 'rgb(' + 150*Math.pow(barHeight/canvas.height, 0.7)*0.8 + ', ' + non_linear_2(non_linear_1(1 - barHeight/canvas.height*0.95)/255)*0.8 + ', ' + (non_linear_1(1 - i/bufferLength))*0.8 + ')';}
+            canvasContext.fillRect(x, y, barWidth, barHeight);
+          }
+          requestAnimationFrame(displaySpectrum);
+        }
+        var canvas = document.getElementById('spectrum');
+        var canvasContext = canvas.getContext('2d');
+        displaySpectrum();
+      } catch(error) {}
+    });
+
+    function non_linear_1(x) { return (2/(1+Math.exp(-2*x))-1)/(2/(1+Math.exp(-2))-1)*255; }
+    function non_linear_2(x) { return Math.pow(x, 1/3) * 255; }
+
+    document.getElementById('spectrum').addEventListener('click', function() {
+      vibration();
+      var canvas = document.getElementById('spectrum');
+      if (!document.fullscreenElement) {
+        if (canvas.requestFullscreen) { canvas.requestFullscreen();}
+        else if (canvas.mozRequestFullScreen) { canvas.mozRequestFullScreen();}
+        else if (canvas.webkitRequestFullscreen) { canvas.webkitRequestFullscreen();}
+        else if (canvas.msRequestFullscreen) { canvas.msRequestFullscreen();}
+      } else {
+        if (document.exitFullscreen) { document.exitFullscreen();}
+        else if (document.mozCancelFullScreen) { document.mozCancelFullScreen();}
+        else if (document.webkitExitFullscreen) { document.webkitExitFullscreen();}
+        else if (document.msExitFullscreen) { document.msExitFullscreen();}
+      }
+    });
+
+    document.addEventListener('keydown', function(event) {
+      switch (event.keyCode) {
+        case 32: // space
+          if (document.getElementById('loaded-label').style.display != "none") {
+            document.getElementById('play-pause').src = toPauseIcon;
+            audioElement.play();
+            if (videoElement.videoWidth * videoElement.videoHeight != 0) {videoElement.play();}
+            return document.getElementById('loaded-label').style.display = "none";
+          }
+          audioElement.blur();
+          event.preventDefault();
+          if (!audioElement.paused) {
+            document.getElementById('play-pause').src = toPlayIcon;
+            audioElement.pause();
+            if (videoElement.videoWidth * videoElement.videoHeight != 0) {videoElement.pause();}
+          } else {
+            document.getElementById('play-pause').src = toPauseIcon;
+            audioElement.play();
+            if (videoElement.videoWidth * videoElement.videoHeight != 0) {videoElement.play();}
+          }
+          break;
+        case 37: // left
+          if (!event.shiftKey) { audioElement.currentTime -= 5;}
+          else { playPrevious(0);}
+          break;
+        case 38: // up
+          event.preventDefault();
+          if (!event.shiftKey) {
+            var volume = audioElement.volume + 0.1;
+            if (volume > 1) {volume = 1;}
+            audioElement.volume = volume;
+          } else { audioElement.volume = 1;}
+          document.getElementById('volume-slider').value = audioElement.volume*100;
+          break;
+        case 39: // right
+          if (!event.shiftKey) {audioElement.currentTime += 5;}
+          else { playNext(0);}
+          break;
+        case 40: // down
+          event.preventDefault();
+          if (!event.shiftKey) {
+            var volume = audioElement.volume - 0.1;
+            if (volume < 0) {volume = 0;}
+            audioElement.volume = volume;
+          } else { audioElement.volume = 0;}
+          document.getElementById('volume-slider').value = audioElement.volume*100;
+          break;
+        case 77: // M
+          togglePlaybackMode(0);
+          break;
+        case 68: // D
+          toggleDarkMode(0);
+          break;
+      }
+    });
+    document.addEventListener('fullscreenchange', function(event) { if (!document.fullscreenElement) {setTimeout(function() {handlePageResize();}, 100);}});
+  </script>
+  </div>
+</body>
+</html>
